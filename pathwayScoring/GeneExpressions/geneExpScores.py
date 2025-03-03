@@ -8,7 +8,7 @@ from jsonParser import pjson
 
 def score(adata, geneSetScore):
     
-    geneset = np.array([geneSetScore.get(var, 0.0) for var in adata.var_names]) # Create a 1D array for each Gene Set 
+    geneset = np.array([geneSetScore.get(var, 0.0) for var in adata.var_names]) # Create a 1D array for the given Gene Set 
                                                                                 # with respect to gene names and their indexes
                                                                                 # from annData object. If the gene name from adata.var_names
                                                                                 # is absent in the geneset, put 0 as the value of the index.
