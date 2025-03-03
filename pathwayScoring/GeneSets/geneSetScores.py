@@ -3,56 +3,53 @@ import numpy as np
 from GeneSets.geneSetObjects import GeneSet
 from jsonParser import pjson
 
+class GeneSetScore(dict):
 
-class GeneSetScore(dict): # Holds the scores of a given geneset in dictionary format for easy accession.
+    def __init__(self, matrix, geneNamesList):
 
-    def __init__(self,matrix,geneNamesList):
-        
         self.matrix = matrix
 
-        self.geneNamesList = geneNamesList # Get the gene names list. To get the gene names, use pjson.getGeneNames() function. 
+        self.geneNamesList = geneNamesList
 
-        self.unique_genes = {} # Dictionary to hold the genes and scores. 
+        num_rows, num_cols = matrix.shape
 
-        for row_index, row in enumerate(self.matrix): # The scoring algorithm.
-            score = 0
+        row_nz_counts = np.count_nonzero(matrix, axis=1) # Get the non-zero element count for each row 
+        
+        scores = np.zeros(num_rows) # Create an empty matrix to hold the scores. 
 
-            cols = np.nonzero(row)[0]
+        for col in range(num_cols):
+            nonzero_rows = np.nonzero(matrix[:, col])[0] # Get nonzero rows. 
+            
+            if nonzero_rows.size == 2: # All columns in the GeneSetMatrix object are gonna have only 2 elements that are different from 0, 
+                                       # control it just in case.
 
-            vals = row[cols]
+                i, j = nonzero_rows # Get the two elements in a column to i,j
 
-            for col,val in zip(cols,vals):
+                scores[i] += matrix[i, col] * row_nz_counts[j] # Multiply the value in the row i with the nonzero count in the row j and
+                                                               # add that to the score of row i.
+                
+                scores[j] += matrix[j, col] * row_nz_counts[i] # Vice versa. 
 
-                rows = np.nonzero(self.matrix[:, col])[0]
+        for i, gene in enumerate(geneNamesList): # Create the dictionary
+            self[gene] = scores[i]
 
-                for i in rows:
-                    if i != row_index:
-                        edges = np.count_nonzero(self.matrix[i])
-                score += val * edges
-
-            if self.geneNamesList[row_index] not in self.unique_genes:
-                self.unique_genes[self.geneNamesList[row_index]] = score
-
-        self.update(self.unique_genes) # Update self to the unique_genes dict
 
 if __name__ == "__main__" : 
 
-    newjson = pjson("/home/sadigungor/pathwayScoring/deneme.json")
+    newjson = pjson("/home/sadigungor/pathwayScoring/big_genesets_relations.json")
     
     y = 0
     for i in newjson:
         
-        print(i)
         y += 1
         newGeneSet = GeneSet(f"GeneSet{y}",newjson[i])
         
         _geneNames = newGeneSet.getGeneNames
-        print(newGeneSet.getAsJson)
+        #print(newGeneSet.getAsJson)
 
         
         newGeneSetScore = GeneSetScore(newGeneSet.getMatrix,_geneNames)
         
-        print(newGeneSetScore) 
         
 
 
